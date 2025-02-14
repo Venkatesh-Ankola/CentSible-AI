@@ -8,7 +8,10 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
+import android.widget.AutoCompleteTextView
 import android.widget.Button
+import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -47,6 +50,12 @@ class PhotoUploadActivity : AppCompatActivity() {
     private var amount: Double = 0.0
     private var category: String = ""
     private var title: String = ""
+    private lateinit var btncross : ImageButton
+
+    private lateinit var amountEditText: EditText
+    private lateinit var categoryAutoCompleteTextView: AutoCompleteTextView
+    private lateinit var titleEditText: EditText
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,12 +64,24 @@ class PhotoUploadActivity : AppCompatActivity() {
         // Initialize views
         btnSelectPhoto = findViewById(R.id.btnSelectPhoto)
         imageViewPreview = findViewById(R.id.imageViewPreview)
-        chatgptResult = findViewById(R.id.chatgptResult)
+//        chatgptResult = findViewById(R.id.chatgptResult)
         saveChatGPTResultButton = findViewById(R.id.saveChatGPTResultButton)
 
         btnSelectPhoto.setOnClickListener {
             openGallery()
         }
+
+        btncross = findViewById(R.id.backBtn)
+
+        btncross.setOnClickListener{
+            intent = Intent(this, MainActivity :: class.java )
+            startActivity(intent)
+        }
+
+        amountEditText = findViewById(R.id.amount)
+        categoryAutoCompleteTextView = findViewById(R.id.category)
+        titleEditText = findViewById(R.id.title)
+
 
         saveChatGPTResultButton.setOnClickListener {
             if (amount != 0.0 && category.isNotEmpty() && title.isNotEmpty()) {
@@ -163,8 +184,15 @@ class PhotoUploadActivity : AppCompatActivity() {
                         category = parsedResult.second
                         title = parsedResult.third
 
-                        chatgptResult.text = "Amount: $amount\nCategory: $category\nTitle: $title"
-                        chatgptResult.visibility = TextView.VISIBLE
+                        amountEditText.setText(amount.toString())
+                        categoryAutoCompleteTextView.setText(category)
+                        titleEditText.setText(title)
+                        amountEditText.visibility = EditText.VISIBLE
+                        categoryAutoCompleteTextView.visibility = AutoCompleteTextView.VISIBLE
+                        titleEditText.visibility = EditText.VISIBLE
+
+//                        chatgptResult.text = "Amount: $amount\nCategory: $category\nTitle: $title"
+//                        chatgptResult.visibility = TextView.VISIBLE
                         saveChatGPTResultButton.visibility = Button.VISIBLE
                     } else {
                         Log.e("ChatGPTParsing", "Failed to parse ChatGPT response")
@@ -218,6 +246,8 @@ class PhotoUploadActivity : AppCompatActivity() {
         auth = Firebase.auth
 
         val transactionID = dbRef.push().key!!
+
+        amount = amountEditText.text.toString().toDouble()
 
         val transactionData = mapOf(
             "id" to transactionID,

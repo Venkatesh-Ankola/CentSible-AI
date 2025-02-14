@@ -1,15 +1,46 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:padding="16dp">
+    android:layout_height="match_parent">
 
+    <!-- Toolbar Linear Layout -->
+    <LinearLayout
+        android:id="@+id/toolbarLinear"
+        android:layout_width="match_parent"
+        android:layout_height="160dp"
+        android:orientation="vertical"
+        android:background="@drawable/bg_insert_expense">
+
+        <ImageButton
+            android:id="@+id/backBtn"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginStart="15dp"
+            android:background="@drawable/ic_baseline_clear_24" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/poppinsmedium"
+            android:textStyle="bold"
+            android:layout_marginStart="30dp"
+            android:layout_marginTop="30dp"
+            android:paddingTop="5dp"
+            android:text="Upload Receipt"
+            android:textColor="@color/white"
+            android:textSize="28sp" />
+    </LinearLayout>
+
+    <!-- Select Photo Button -->
     <Button
         android:id="@+id/btnSelectPhoto"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_below="@id/toolbarLinear"
         android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"
         android:text="Select Photo" />
 
+    <!-- Image Preview -->
     <ImageView
         android:id="@+id/imageViewPreview"
         android:layout_width="200dp"
@@ -20,26 +51,129 @@
         android:scaleType="centerCrop"
         android:background="@color/white" />
 
-    <TextView
-        android:id="@+id/chatgptResult"
+    <!-- Input Fields Start Here -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/amountTIL"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/imageViewPreview"
-        android:layout_marginTop="16dp"
-        android:text="ChatGPT Results will appear here"
-        android:textSize="16sp"
-        android:textColor="@color/black"
-        android:visibility="gone" />
+        android:layout_marginHorizontal="30dp"
+        android:layout_marginTop="20dp"
+        >
 
+        <EditText
+            android:id="@+id/amount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawableLeft="@drawable/ic_baseline_attach_money_24"
+            android:drawablePadding="8dp"
+            android:ems="10"
+            android:hint="Amount"
+            android:inputType="numberDecimal"
+            android:textColor="@color/black"
+            android:visibility="gone"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/titleTIL"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/amountTIL"
+        android:layout_marginHorizontal="30dp"
+        android:layout_marginTop="20dp">
+
+        <EditText
+            android:id="@+id/title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawableLeft="@drawable/ic_baseline_title_24"
+            android:drawablePadding="8dp"
+            android:ems="10"
+            android:hint="Title"
+            android:inputType="text"
+            android:textColor="@color/black"
+            android:visibility="gone"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/categoryTIL"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/titleTIL"
+        android:layout_marginHorizontal="30dp"
+        android:layout_marginTop="20dp">
+
+        <AutoCompleteTextView
+            android:id="@+id/category"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawableStart="@drawable/ic_baseline_format_list_bulleted_24"
+            android:drawablePadding="8dp"
+            android:hint="Category"
+            android:inputType="none"
+            android:visibility="gone"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/dateTIL"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/categoryTIL"
+        android:layout_marginHorizontal="30dp"
+        android:layout_marginTop="20dp">
+
+        <EditText
+            android:id="@+id/date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawableLeft="@drawable/ic_baseline_calendar_month_24"
+            android:drawablePadding="8dp"
+            android:ems="10"
+            android:focusable="false"
+            android:hint="Date"
+            android:inputType="date"
+            android:text="Today"
+            android:textColor="#717171"
+            android:textColorHint="@color/black"
+            android:visibility="gone"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/noteTIL"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/dateTIL"
+        android:layout_marginHorizontal="30dp"
+        android:layout_marginTop="20dp">
+
+        <EditText
+            android:id="@+id/note"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawableLeft="@drawable/ic_baseline_notes_24"
+            android:drawablePadding="8dp"
+            android:ems="10"
+            android:hint="Note"
+            android:inputType="textMultiLine"
+            android:textColor="@color/black"
+            android:visibility="gone"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Save Button -->
     <Button
         android:id="@+id/saveChatGPTResultButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/chatgptResult"
+        android:layout_below="@id/noteTIL"
         android:layout_marginTop="16dp"
         android:layout_centerHorizontal="true"
         android:backgroundTint="@color/orangePrimary"
         android:textColor="@color/white"
         android:text="Save"
-        android:visibility="gone" />
+        android:visibility="gone"/>
 </RelativeLayout>
