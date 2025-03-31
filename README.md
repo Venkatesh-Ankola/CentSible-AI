@@ -16,12 +16,11 @@ These are some pictures of the app's user interface :<br /><br />
 <img src="imagesUI/20220619_Sign In Activity.jpg" width=180>
 <img src="imagesUI/20220619_Sign Up Activity.jpg" width=180>
 <img src="imagesUI/20220619_Forgot Password.jpg" width=180>
-<img src="imagesUI/20220619_Insert Activity Expense.jpg" width=180>
+<img src="imagesUI/20220619_Insert Activity Expense.jpg" width=180></br>
 <img src="imagesUI/20220619_Insert Activity Income.jpg" width=180>
-<img src="imagesUI/20220619_Transaction Details Expense.jpg" width=180><br />
+<img src="imagesUI/20220619_Transaction Details Expense.jpg" width=180>
 <img src="imagesUI/20220619_Transaction Details Income.jpg" width=180>
-<img src="imagesUI/20220627_Export Activity.jpg" width=180>
-
+<img src="imagesUI/20220627_Export Activity.jpg" width=180></br>
 <img src="imagesUI/20220619_Transaction Report.jpg" width=180>
 
 <br /><br />
