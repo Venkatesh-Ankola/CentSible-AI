@@ -2,13 +2,16 @@ package com.myapp.catatuang.fragments
 
 import android.content.Intent
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.annotation.RequiresApi
 import androidx.cardview.widget.CardView
 import androidx.core.util.Pair
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -22,11 +25,30 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.*
 import com.google.firebase.ktx.Firebase
+import com.google.gson.Gson
 import com.myapp.catatuang.*
 import com.myapp.catatuang.R
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.request.post
+import io.ktor.client.statement.HttpResponse
+import io.ktor.serialization.gson.gson
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
+import io.ktor.serialization.gson.*
+import kotlinx.coroutines.*
+//import org.json.JSONObject
+import java.io.IOException
+
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -54,6 +76,8 @@ class AccountFragment : Fragment() {
     var amountIncome: Double = 0.0
     var allTimeExpense: Double = 0.0
     var allTimeIncome: Double = 0.0
+    var topSpendingAmount: Double = 0.0
+    var topSpendingCategory: String = ""
 
     private var dateStart: Long = 0
     private var dateEnd: Long = 0
@@ -89,6 +113,7 @@ class AccountFragment : Fragment() {
             showAllTimeRecap() //show all time recap text
             setupPieChart()
             setupBarChart()
+            showAIInsights()
         }, 200)
 
         dateRangePicker() //date range picker
@@ -103,6 +128,7 @@ class AccountFragment : Fragment() {
             showAllTimeRecap()
             setupPieChart()
             setupBarChart()
+            showAIInsights()
             swipeRefreshLayout.isRefreshing = false
         }
     }
@@ -111,18 +137,153 @@ class AccountFragment : Fragment() {
         val chartMenuRadio: RadioGroup = requireView().findViewById(R.id.RadioGroup)
         val pieChart: PieChart = requireView().findViewById(R.id.pieChart)
         val barChart: BarChart = requireView().findViewById(R.id.barChart)
+        val aiInsightLayout: LinearLayout = requireView().findViewById(R.id.aiInsightLayout)
 
         chartMenuRadio.setOnCheckedChangeListener { _, checkedID ->
             if (checkedID == R.id.rbBarChart){
                 barChart.visibility = View.VISIBLE
                 pieChart.visibility = View.GONE
+                aiInsightLayout.visibility = View.GONE
             }
             if (checkedID == R.id.rbPieChart){
                 barChart.visibility = View.GONE
                 pieChart.visibility = View.VISIBLE
+                aiInsightLayout.visibility = View.GONE
+            }
+            if (checkedID == R.id.rbInsights){
+                barChart.visibility = View.GONE
+                pieChart.visibility = View.GONE
+                aiInsightLayout.visibility = View.VISIBLE
+                showAIInsights()
+            }
+
+            }
+
+    }
+
+    private fun showAIInsights() {
+        val tvTopCategory: TextView = requireView().findViewById(R.id.tvTopCategory)
+        val tvMonthlyComparison: TextView = requireView().findViewById(R.id.tvMonthlyComparison)
+        val tvAverageDailySpend: TextView = requireView().findViewById(R.id.tvAverageDailySpend)
+        val tvPredictedBudget: TextView = requireView().findViewById(R.id.tvMonthlyBudget)
+
+        // Display insights
+        tvTopCategory.text = "Top Spending Category: $topSpendingCategory"
+        tvMonthlyComparison.text = "You spent the most on $topSpendingCategory with a total of $${String.format("%.2f", topSpendingAmount)}"
+
+        val dailyAverage = if (amountExpense > 0) amountExpense / 30 else 0.0
+        tvAverageDailySpend.text = "Your average daily spending: $${String.format("%.2f", dailyAverage)}"
+
+        fetchPredictedBudget { predictedBudget ->
+            tvPredictedBudget.text = "Predicted Budget for Next Month: $${String.format("%.2f", predictedBudget)}"
+        }
+    }
+
+    private fun fetchPredictedBudget(callback: (Double) -> Unit) {
+        val transactionList = mutableListOf<Map<String, Any>>()
+
+        dbRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if (snapshot.exists()) {
+                    for (transactionSnap in snapshot.children) {
+                        val transactionData = transactionSnap.getValue(TransactionModel::class.java)
+                        if (transactionData != null) {
+                            transactionList.add(
+                                mapOf(
+                                    "date" to transactionData.date!!,
+                                    "amount" to transactionData.amount!!,
+                                    "category" to (transactionData.category ?: "Other"),
+                                    "type" to if (transactionData.type == 1) "expense" else "income"
+                                )
+                            )
+                        }
+                    }
+                }
+
+                // Convert transactions to JSON and send to OpenAI
+                val transactionsJson = Gson().toJson(transactionList)
+                Log.d("TransactionJSON", "Transactions JSON: $transactionsJson")
+                sendToOpenAI(transactionsJson, callback)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Toast.makeText(activity, "Failed to fetch data: ${error.message}", Toast.LENGTH_LONG).show()
+            }
+        })
+    }
+
+    private fun sendToOpenAI(transactionsText: String, callback: (Double) -> Unit) {
+        val client = HttpClient(CIO) {
+            install(ContentNegotiation) {
+                gson()
+            }
+        }
+
+        val prompt = """
+        Based on the following financial transactions, predict my total budget for the next month.  
+- My total budget should be based on my income and expenses.  
+- I want to save **20% of my income**, so only **80% of my income** should be allocated for expenses.  
+- Provide only a **single numerical value** as output, representing the maximum amount I can allocate for expenses.  
+
+Output Format:
+Provide only a single numerical value representing the maximum amount I can allocate for expenses next month, considering my goal of saving 20% of my income.
+- **Removed extra explanations** that might cause verbose responses.  
+- **Clearly specified** that only a **numerical value** should be returned.
+
+The transactions are in the following JSON format:
+$transactionsText
+
+    """
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val response: HttpResponse = client.post("https://api.openai.com/v1/chat/completions") {
+                    contentType(ContentType.Application.Json)
+                    header("Authorization", "Bearer sk-2dzxM6-wwKOkqyePIBDkdX06yLDMAqxmekWz-VYIjUT3BlbkFJrxgwPqpUlw-5V52Au6ZOIvEt6YVfpf4GlfEIXtmuwA") // Replace with your API key
+                    setBody(
+                        mapOf(
+                            "model" to "gpt-3.5-turbo",
+                            "messages" to listOf(
+                                mapOf(
+                                    "role" to "user",
+                                    "content" to prompt
+                                )
+                            ),
+                            "max_tokens" to 500,
+                            "temperature" to 0.5
+                        )
+                    )
+                }
+
+                val responseBody: String = response.body()
+//                val jsonObject = JSONObject(responseBody)
+                val predictedBudget = responseBody.substringAfter("\"content\": \"")
+                    .substringBefore("\"")
+                    .toDoubleOrNull() ?: 0.0
+
+                withContext(Dispatchers.Main) {
+                    Log.d("ChatGPTResponse", "Predicted Budget Response: $responseBody")
+                    callback(predictedBudget)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(activity, "Error: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            } finally {
+                client.close()
             }
         }
     }
+
+    private fun extractBudgetFromResponse(response: String?): Double {
+        if (response == null) return 0.0
+        val regex = """\d+(\.\d+)?""".toRegex()
+        val matchResult = regex.find(response)
+        return matchResult?.value?.toDouble() ?: 0.0
+    }
+
+
 
     private fun setInitDate() {
         val dateRangeButton: Button = requireView().findViewById(R.id.buttonDate)
@@ -174,6 +335,7 @@ class AccountFragment : Fragment() {
                 Handler().postDelayed({
                     setupPieChart()
                     setupBarChart()
+                    showAIInsights()
                 }, 200)
             }
         }
@@ -339,59 +501,78 @@ class AccountFragment : Fragment() {
         pieChart.invalidate()
     }
 
-    private fun fetchAmount(dateStart: Long, dateEnd: Long) { //show and calculate transaction recap
+    private fun fetchAmount(dateStart: Long, dateEnd: Long) {
         var amountExpenseTemp = 0.0
         var amountIncomeTemp = 0.0
 
         val transactionList: ArrayList<TransactionModel> = arrayListOf<TransactionModel>()
+        val categoryMap = mutableMapOf<String, Double>()
 
         dbRef.addValueEventListener(object : ValueEventListener {
+            @RequiresApi(Build.VERSION_CODES.N)
             override fun onDataChange(snapshot: DataSnapshot) {
                 transactionList.clear()
                 if (snapshot.exists()) {
                     for (transactionSnap in snapshot.children) {
-                        val transactionData =
-                            transactionSnap.getValue(TransactionModel::class.java) //reference data class
+                        val transactionData = transactionSnap.getValue(TransactionModel::class.java)
                         transactionList.add(transactionData!!)
                     }
                 }
-                //separate expanse amount and income amount, and show it based on the range date :
-                for ((i) in transactionList.withIndex()){
+
+                // Separate expense and income amounts for the selected date range
+                for ((i) in transactionList.withIndex()) {
                     if (transactionList[i].type == 1 &&
-                        transactionList[i].date!! > dateStart-86400000 && //minus by 1 day
-                        transactionList[i].date!! <= dateEnd){
+                        transactionList[i].date!! > dateStart - 86400000 &&
+                        transactionList[i].date!! <= dateEnd) {
+
                         amountExpenseTemp += transactionList[i].amount!!
-                    }else if (transactionList[i].type == 2 &&
-                        transactionList[i].date!! > dateStart-86400000 &&
-                        transactionList[i].date!! <= dateEnd){
+
+                        // Track category-wise expenses
+                        val category = transactionList[i].category ?: "Other"
+                        categoryMap[category] = categoryMap.getOrDefault(category, 0.0) + transactionList[i].amount!!
+                    }
+                    else if (transactionList[i].type == 2 &&
+                        transactionList[i].date!! > dateStart - 86400000 &&
+                        transactionList[i].date!! <= dateEnd) {
+
                         amountIncomeTemp += transactionList[i].amount!!
                     }
                 }
-                amountExpense= amountExpenseTemp
+
+                amountExpense = amountExpenseTemp
                 amountIncome = amountIncomeTemp
 
-                var amountExpenseTemp = 0.0 //reset
+                var amountExpenseTemp = 0.0 // Reset
                 var amountIncomeTemp = 0.0
 
-                //take all amount expense and income :
-                for ((i) in transactionList.withIndex()){
-                    if (transactionList[i].type == 1 ){
+                // Calculate all-time expense and income
+                for ((i) in transactionList.withIndex()) {
+                    if (transactionList[i].type == 1) {
                         amountExpenseTemp += transactionList[i].amount!!
-                    }else if (transactionList[i].type == 2){
+                    } else if (transactionList[i].type == 2) {
                         amountIncomeTemp += transactionList[i].amount!!
                     }
                 }
                 allTimeExpense = amountExpenseTemp
                 allTimeIncome = amountIncomeTemp
 
+                // Identify the top spending category
+                if (categoryMap.isNotEmpty()) {
+                    val topCategory = categoryMap.maxByOrNull { it.value }
+                    topSpendingCategory = topCategory?.key ?: "Unknown"
+                    topSpendingAmount = topCategory?.value ?: 0.0
+                } else {
+                    topSpendingCategory = "Unknown"
+                    topSpendingAmount = 0.0
+                }
             }
 
             override fun onCancelled(error: DatabaseError) {
-                TODO("Not yet implemented")
+                Toast.makeText(activity, "Failed to fetch data: ${error.message}", Toast.LENGTH_LONG).show()
             }
         })
-
     }
+
 
     private fun convertDate(dateStart: Long, dateEnd: Long): String {
         val simpleDateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH)
@@ -408,6 +589,7 @@ class AccountFragment : Fragment() {
         showAllTimeRecap() //show all time recap text
         setupPieChart()
         setupBarChart()
+        showAIInsights()
     }
 
 
@@ -432,8 +614,3 @@ class AccountFragment : Fragment() {
     }
 }
 
-/* Catat Uang App,
-   A simple money tracker app.
-   Created By Ferry Dwianta P
-   First Created on 18/05/2022
-*/

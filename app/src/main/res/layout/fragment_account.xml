@@ -386,6 +386,17 @@
                                             android:textColor="@drawable/chart_text_selector" />
 
                                         <RadioButton
+                                            android:id="@+id/rbInsights"
+                                            android:layout_width="match_parent"
+                                            android:layout_height="wrap_content"
+                                            android:layout_weight="1"
+                                            android:background="@drawable/chart_selector"
+                                            android:button="@drawable/null_radio_button"
+                                            android:gravity="center"
+                                            android:text="AI Insight"
+                                            android:textColor="@drawable/chart_text_selector" />
+
+                                        <RadioButton
                                             android:id="@+id/rbPieChart"
                                             android:layout_width="match_parent"
                                             android:layout_height="wrap_content"
@@ -418,6 +429,50 @@
                                 android:layout_below="@+id/chartMenu"
                                 android:layout_marginBottom="20dp"
                                 android:visibility="gone" />
+
+                            <LinearLayout
+                                android:id="@+id/aiInsightLayout"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_below="@+id/chartMenu"
+                                android:orientation="vertical"
+                                android:visibility="gone"
+                                android:padding="16dp"
+                                android:background="@color/white">
+
+                                <TextView
+                                    android:id="@+id/tvTopCategory"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Top Spending Category: "
+                                    android:textSize="16sp"
+                                    android:textColor="@android:color/black" />
+
+                                <TextView
+                                    android:id="@+id/tvMonthlyComparison"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Monthly Comparison: "
+                                    android:textSize="16sp"
+                                    android:textColor="@android:color/black" />
+
+                                <TextView
+                                    android:id="@+id/tvAverageDailySpend"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Average Daily Spending: "
+                                    android:textSize="16sp"
+                                    android:textColor="@android:color/black" />
+
+                                <TextView
+                                    android:id="@+id/tvMonthlyBudget"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Predicted Budget for Next Month: "
+                                    android:textSize="16sp"
+                                    android:textColor="@android:color/black" />
+
+                            </LinearLayout>
 
                         </RelativeLayout>
 

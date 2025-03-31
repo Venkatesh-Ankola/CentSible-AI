@@ -5,13 +5,14 @@ plugins {
 }
 
 android {
-    compileSdk 32
+    compileSdk 33
+    namespace 'com.myapp.catatuang'
 
     defaultConfig {
         applicationId "com.myapp.catatuang"
         minSdk 23 //minSdk change to 23 from 21
         //noinspection ExpiredTargetSdkVersion
-        targetSdk 32
+        targetSdk 33
         versionCode 1
         versionName "1.0"
 
@@ -85,6 +86,7 @@ dependencies {
     implementation "io.ktor:ktor-client-cio:2.0.0"
     implementation "io.ktor:ktor-client-content-negotiation:2.0.0"
     implementation "io.ktor:ktor-serialization-gson:2.0.0"
+    implementation 'androidx.biometric:biometric:1.2.0-alpha05'
 
 
 
