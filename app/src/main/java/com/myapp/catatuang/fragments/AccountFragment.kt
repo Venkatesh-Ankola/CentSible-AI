@@ -1,10 +1,15 @@
-package com.myapp.catatuang.fragments
+package com.myapp.catatuang
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -13,6 +18,8 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.annotation.RequiresApi
 import androidx.cardview.widget.CardView
+import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import androidx.core.util.Pair
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.github.mikephil.charting.charts.BarChart
@@ -27,7 +34,6 @@ import com.google.firebase.database.*
 import com.google.firebase.ktx.Firebase
 import com.google.gson.Gson
 import com.myapp.catatuang.*
-import com.myapp.catatuang.R
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
@@ -47,7 +53,6 @@ import io.ktor.http.*
 import io.ktor.serialization.gson.*
 import kotlinx.coroutines.*
 //import org.json.JSONObject
-import java.io.IOException
 
 
 // TODO: Rename parameter arguments, choose names that match
@@ -176,10 +181,79 @@ class AccountFragment : Fragment() {
 
         fetchPredictedBudget { predictedBudget ->
             tvPredictedBudget.text = "Predicted Budget for Next Month: $${String.format("%.2f", predictedBudget)}"
+            Log.d("ExpenseLog", "Current amountExpense: $amountExpense")
+            if (amountExpense >= predictedBudget && predictedBudget > 0 ) {
+                sendBudgetExceededNotification()
+                markNotificationAsSent()
+            }
         }
+
+
     }
 
+    private fun sendBudgetExceededNotification() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1001)
+                return
+            }
+        }
+
+        val notificationManager = requireContext().getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val channelId = "budget_alert_channel"
+        Log.d("ExpenseLog", "Sending Notification")
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                "Budget Alerts",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notifies when you exceed your monthly budget"
+            }
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val builder = NotificationCompat.Builder(requireContext(), channelId)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle("Budget Alert")
+            .setContentText("You've reached your predicted budget limit for this month.")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+
+        Handler(Looper.getMainLooper()).postDelayed({
+            notificationManager.notify(101, builder.build())
+        }, 200)
+    }
+
+
+    private fun notificationAlreadySent(): Boolean {
+        val prefs = requireActivity().getSharedPreferences("AI_PREFS", android.content.Context.MODE_PRIVATE)
+        val currentMonth = SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(Date())
+        return prefs.getBoolean("notified_$currentMonth", false)
+    }
+
+    private fun markNotificationAsSent() {
+        val prefs = requireActivity().getSharedPreferences("AI_PREFS", android.content.Context.MODE_PRIVATE)
+        val currentMonth = SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(Date())
+        prefs.edit().putBoolean("notified_$currentMonth", true).apply()
+    }
+
+
     private fun fetchPredictedBudget(callback: (Double) -> Unit) {
+        val today = Calendar.getInstance()
+        val dayOfMonth = today.get(Calendar.DAY_OF_MONTH)
+
+        val sharedPref = requireActivity().getSharedPreferences("AI_PREFS", android.content.Context.MODE_PRIVATE)
+
+        val savedBudget = sharedPref.getFloat("predicted_budget", -1f)
+        val savedDate = sharedPref.getString("budget_date", "")
+
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val currentDate = dateFormat.format(Date())
+
+        val shouldFetchNew = (dayOfMonth == 1) || savedBudget == 0f || savedBudget == -1f
+
         val transactionList = mutableListOf<Map<String, Any>>()
 
         dbRef.addListenerForSingleValueEvent(object : ValueEventListener {
@@ -200,10 +274,21 @@ class AccountFragment : Fragment() {
                     }
                 }
 
-                // Convert transactions to JSON and send to OpenAI
                 val transactionsJson = Gson().toJson(transactionList)
                 Log.d("TransactionJSON", "Transactions JSON: $transactionsJson")
-                sendToOpenAI(transactionsJson, callback)
+
+                if (shouldFetchNew) {
+                    sendToOpenAI(transactionsJson) { predictedBudget ->
+                        with(sharedPref.edit()) {
+                            putFloat("predicted_budget", predictedBudget.toFloat())
+                            putString("budget_date", currentDate)
+                            apply()
+                        }
+                        callback(predictedBudget)
+                    }
+                } else {
+                    callback(savedBudget.toDouble())
+                }
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -211,6 +296,8 @@ class AccountFragment : Fragment() {
             }
         })
     }
+
+
 
     private fun sendToOpenAI(transactionsText: String, callback: (Double) -> Unit) {
         val client = HttpClient(CIO) {

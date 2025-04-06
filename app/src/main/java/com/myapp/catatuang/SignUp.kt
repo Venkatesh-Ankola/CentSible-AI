@@ -1,11 +1,16 @@
 package com.myapp.catatuang
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
 import android.content.Intent
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Patterns
 import android.view.View
 import android.widget.Toast
+import androidx.core.app.NotificationCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.myapp.catatuang.databinding.ActivitySignUpBinding
 
@@ -14,6 +19,31 @@ class SignUp : AppCompatActivity() {
 
     private lateinit var firebaseAuth: FirebaseAuth //untuk autentikasi firebase
     private lateinit var binding: ActivitySignUpBinding
+
+    private fun sendWelcomeNotification() {
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val channelId = "welcome_channel"
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                "Welcome Channel",
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = "Welcome notifications for new users"
+            }
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val builder = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(R.drawable.ic_launcher_foreground) // Replace with your logo/icon
+            .setContentTitle("Welcome to CenSible AI 🎉")
+            .setContentText("We're excited to help you take control of your finances!")
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+
+        notificationManager.notify(100, builder.build())
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,7 +64,8 @@ class SignUp : AppCompatActivity() {
                     if (pass == confirmPass){
                         binding.progressBar.visibility = View.VISIBLE //show loading progress bar
                         firebaseAuth.createUserWithEmailAndPassword(email, pass).addOnCompleteListener {
-                            if (it.isSuccessful){ //if the sign up succesful then change activity to main activity
+                            if (it.isSuccessful){
+                                sendWelcomeNotification()//if the sign up succesful then change activity to main activity
                                 val intent = Intent(this, MainActivity::class.java)
                                 Toast.makeText(this, "Sign Up Successful", Toast.LENGTH_LONG).show()
                                 binding.progressBar.visibility = View.GONE

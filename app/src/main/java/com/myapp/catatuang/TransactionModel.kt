@@ -1,8 +1,5 @@
 package com.myapp.catatuang
 
-import android.text.Editable
-import java.util.*
-
 data class TransactionModel(
     var transactionID: String? =null,
     var type: Int? =null,

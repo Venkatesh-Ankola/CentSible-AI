@@ -5,9 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
-import com.ismaeldivita.chipnavigation.ChipNavigationBar
 import com.myapp.catatuang.databinding.ActivityMainBinding
-import com.myapp.catatuang.fragments.AccountFragment
 import com.myapp.catatuang.fragments.TransactionFragment
 
 class MainActivity : AppCompatActivity() {

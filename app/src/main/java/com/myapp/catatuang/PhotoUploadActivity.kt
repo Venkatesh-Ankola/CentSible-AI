@@ -3,7 +3,6 @@ package com.myapp.catatuang
 import org.json.JSONObject
 import android.app.Activity
 import android.content.Intent
-import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -16,6 +15,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.FileProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.DatabaseReference
@@ -35,8 +35,20 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+
 
 class PhotoUploadActivity : AppCompatActivity() {
+
+    private val REQUEST_IMAGE_CAPTURE = 101
+    private val REQUEST_IMAGE_PICK = 100
+    private lateinit var photoURI: Uri
+    private val CAMERA_PERMISSION_CODE = 200
+
+
 
     private lateinit var btnSelectPhoto: Button
     private lateinit var imageViewPreview: ImageView
@@ -68,8 +80,18 @@ class PhotoUploadActivity : AppCompatActivity() {
         saveChatGPTResultButton = findViewById(R.id.saveChatGPTResultButton)
 
         btnSelectPhoto.setOnClickListener {
-            openGallery()
+            val options = arrayOf("Take Photo", "Choose from Gallery")
+            val builder = android.app.AlertDialog.Builder(this)
+            builder.setTitle("Select Option")
+            builder.setItems(options) { dialog, which ->
+                when (which) {
+                    0 -> openCamera()
+                    1 -> openGallery()
+                }
+            }
+            builder.show()
         }
+
 
         btncross = findViewById(R.id.backBtn)
 
@@ -92,23 +114,68 @@ class PhotoUploadActivity : AppCompatActivity() {
         }
     }
 
+    private fun openCamera() {
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA)
+            != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.CAMERA), CAMERA_PERMISSION_CODE)
+        } else {
+            launchCameraIntent()
+        }
+    }
+
+    private fun launchCameraIntent() {
+        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        val photoFile = File.createTempFile("IMG_", ".jpg", externalCacheDir)
+        photoURI = FileProvider.getUriForFile(this, "$packageName.provider", photoFile)
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+        startActivityForResult(intent, REQUEST_IMAGE_CAPTURE)
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        if (requestCode == CAMERA_PERMISSION_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                launchCameraIntent()
+            } else {
+                Toast.makeText(this, "Camera permission denied", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+
+
+
     private fun openGallery() {
         val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-        startActivityForResult(intent, 100)
+        startActivityForResult(intent, REQUEST_IMAGE_PICK)
     }
+
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 100 && resultCode == Activity.RESULT_OK && data != null) {
-            selectedImageUri = data.data
-            imageViewPreview.setImageURI(selectedImageUri) // Display the selected image
-            selectedImageUri?.let {
-                processImage(it)
+
+        if (resultCode == Activity.RESULT_OK) {
+            when (requestCode) {
+                REQUEST_IMAGE_PICK -> {
+                    selectedImageUri = data?.data
+                    selectedImageUri?.let {
+                        imageViewPreview.setImageURI(it)
+                        processImage(it)
+                    }
+                }
+                REQUEST_IMAGE_CAPTURE -> {
+                    selectedImageUri = photoURI
+                    imageViewPreview.setImageURI(photoURI)
+                    processImage(photoURI)
+                }
             }
         } else {
             Toast.makeText(this, "No image selected", Toast.LENGTH_SHORT).show()
         }
     }
+
 
     private fun processImage(uri: Uri) {
         try {
