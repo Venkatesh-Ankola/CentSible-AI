@@ -4,6 +4,7 @@ import android.app.DatePickerDialog
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import android.widget.*
 import androidx.core.content.ContextCompat
 import com.google.android.material.snackbar.Snackbar
@@ -74,15 +75,18 @@ class InsertionActivity : AppCompatActivity() {
         radioGroup.setOnCheckedChangeListener { _, checkedID ->
             etCategory.text.clear() //clear the category autocompletetextview when the type changes
             if (checkedID == R.id.rbUpload) {
+                cbRecurring.visibility = View.GONE
                 val intent = Intent(this, PhotoUploadActivity::class.java)
                 startActivity(intent)
             }
             if (checkedID == R.id.rbExpense) {
+                cbRecurring.visibility = View.VISIBLE
                 type = 1 //expense
                 setBackgroundColor()
                 etCategory.setAdapter(expenseAdapter) //if expense type selected, the set list expense array in category menu
             }
             if (checkedID == R.id.rbIncome){
+                cbRecurring.visibility = View.GONE
                 type = 2 //income
                 setBackgroundColor()
 

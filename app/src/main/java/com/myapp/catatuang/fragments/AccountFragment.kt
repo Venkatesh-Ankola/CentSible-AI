@@ -600,6 +600,8 @@ $transactionsText
     private fun logout() {
         val btnLogout: ImageButton = requireView().findViewById(R.id.btnLogout)
         btnLogout.setOnClickListener {
+            val sharedPref = requireActivity().getSharedPreferences("AI_PREFS", Context.MODE_PRIVATE)
+            sharedPref.edit().remove("predicted_budget").apply()
             auth.signOut()
             Intent(this.activity, Login::class.java).also {
                 it.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK //tujuan flag agar tidak bisa menggunakan back
