@@ -39,7 +39,6 @@ class MainActivity : AppCompatActivity() {
             b
         }
         //------
-
     }
 
 //    private fun bottom_menu() { //method 1

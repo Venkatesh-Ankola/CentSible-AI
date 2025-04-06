@@ -216,11 +216,23 @@
                     />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <CheckBox
+                android:id="@+id/recurringCheckBox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/noteTIL"
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="30dp"
+                android:text="Mark as recurring expense"
+                android:textColor="@color/black"
+                android:textSize="14sp"/>
+
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/saveButton"
                 android:layout_width="wrap_content"
                 android:layout_height="50dp"
-                android:layout_below="@+id/noteTIL"
+                android:layout_below="@+id/recurringCheckBox"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="20dp"
                 android:backgroundTint="@color/orangePrimary"

@@ -8,5 +8,6 @@ data class TransactionModel(
     var amount: Double? =null,
     var date: Long? =null,
     var note: String? =null,
-    var invertedDate: Long?=null
+    var invertedDate: Long?=null,
+    val recurring: Boolean = false
 )

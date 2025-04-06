@@ -59,6 +59,8 @@ class Biometrics : AppCompatActivity() {
         }
     }
 
+
+
     private fun setupBiometricAuthentication() {
         val executor: Executor = ContextCompat.getMainExecutor(this)
 

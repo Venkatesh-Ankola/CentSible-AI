@@ -31,6 +31,8 @@ class InsertionActivity : AppCompatActivity() {
     private var date: Long = 0
     private var invertedDate: Long = 0
 
+    private lateinit var cbRecurring: CheckBox
+
     private lateinit var dbRef: DatabaseReference //initialize database
     private lateinit var auth: FirebaseAuth
 
@@ -139,6 +141,7 @@ class InsertionActivity : AppCompatActivity() {
         rbIncome = findViewById(R.id.rbIncome)
         etNote = findViewById(R.id.note)
         toolbarLinear = findViewById(R.id.toolbarLinear)
+        cbRecurring = findViewById(R.id.recurringCheckBox)
     }
 
     private fun clickDatePicker() {
@@ -172,6 +175,8 @@ class InsertionActivity : AppCompatActivity() {
         val category = etCategory.text.toString()
         val amountEt = etAmount.text.toString()
         val note = etNote.text.toString()
+        val recurring = cbRecurring.isChecked
+
 
         if(amountEt.isEmpty()){
             etAmount.error = "Please enter Amount"
@@ -184,7 +189,7 @@ class InsertionActivity : AppCompatActivity() {
 
             val transactionID = dbRef.push().key!!
             invertedDate = date * -1 //convert millis value to negative, so it can be sort as descending order
-            val transaction = TransactionModel(transactionID, type, title, category, amount, date, note, invertedDate) //object of data class
+            val transaction = TransactionModel(transactionID, type, title, category, amount, date, note, invertedDate, recurring) //object of data class
 
             dbRef.child(transactionID).setValue(transaction)
                 .addOnCompleteListener {
@@ -196,11 +201,11 @@ class InsertionActivity : AppCompatActivity() {
 
             isSubmitted = true
         }
+
+
     }
+
+
+
 }
 
-/* Catat Uang App,
-   A simple money tracker app.
-   Created By Ferry Dwianta P
-   First Created on 18/05/2022
-*/

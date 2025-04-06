@@ -368,8 +368,3 @@ class ExportData : AppCompatActivity() {
     }
 }
 
-/* Catat Uang App,
-   A simple money tracker app.
-   Created By Ferry Dwianta P
-   First Created on 18/05/2022
-*/
