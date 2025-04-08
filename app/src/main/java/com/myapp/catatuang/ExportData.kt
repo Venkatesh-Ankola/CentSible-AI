@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
 import android.provider.Settings
 import android.util.Log
 import android.widget.Button
@@ -49,12 +48,10 @@ class ExportData : AppCompatActivity() {
     private var dbRef: DatabaseReference = FirebaseDatabase.getInstance().getReference(uid!!)
 
     private val tagPermission: String? = ExportData::class.java.simpleName
-    private val PERMISSIONS = arrayOf(
-        Manifest.permission.READ_EXTERNAL_STORAGE,
-        Manifest.permission.WRITE_EXTERNAL_STORAGE
-    )
 
     private lateinit var fileName: String
+
+    private val REQUEST_CODE_CREATE_FILE = 100
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,29 +63,15 @@ class ExportData : AppCompatActivity() {
 
         dateRangePicker()
 
-        //Export transaction data to excel file : https://medium.com/geekculture/creating-an-excel-in-android-cd9c22198619
+        // Export transaction data to excel file
         val exportButton: Button = findViewById(R.id.exportBtn)
         exportButton.setOnClickListener {
-            fileName = "Catat_Uang_" + convertDateFileName(dateStart, dateEnd) + ".xls"
-            val isPermissionGranted = checkPermissionsAtRuntime()
-            if (isPermissionGranted){
-                exportDataIntoWorkbook()
-            }else{
-                inflateAlertDialog()
-                Snackbar.make(it, "Permission is not granted", Snackbar.LENGTH_LONG).show()
-            }
-
+            fileName = "CentsibleAI" + convertDateFileName(dateStart, dateEnd) + ".xls"
+            exportDataIntoWorkbook()
         }
     }
 
     private fun exportDataIntoWorkbook() {
-
-        // Check if available and not read only
-        if (!isExternalStorageAvailable() || isExternalStorageReadOnly()) {
-            Log.e(TAG, "Storage not available or read only")
-
-        }
-
         //Creating a new HSSF Workbook (.xls format)
         workbook = HSSFWorkbook()
 
@@ -107,38 +90,6 @@ class ExportData : AppCompatActivity() {
         fillDataIntoExcel()
     }
 
-    private fun storeExcelInStorage() {
-        var isExcelGenerated: Boolean
-        val file = File(
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fileName)
-        var fileOutputStream: FileOutputStream? = null
-
-        try {
-            fileOutputStream = FileOutputStream(file)
-            workbook.write(fileOutputStream)
-            Log.e(TAG, "Writing file$file")
-            isExcelGenerated = true
-        } catch (e: IOException) {
-            Log.e(TAG, "Error writing Exception: ", e)
-            isExcelGenerated = false
-        } catch (e: Exception) {
-            Log.e(TAG,"Failed to save file due to Exception: ", e)
-            isExcelGenerated = false
-        } finally {
-            try {
-                fileOutputStream?.close()
-            } catch (ex: Exception) {
-                ex.printStackTrace()
-            }
-        }
-
-        if (isExcelGenerated){
-            Snackbar.make(findViewById(android.R.id.content), "Excel file Exported Successfully into Downloads Folder", Snackbar.LENGTH_LONG).show()
-        }else{
-            Toast.makeText(this, "Export failed!", Toast.LENGTH_LONG).show()
-        }
-    }
-
     private fun fillDataIntoExcel() {
         val transactionList: ArrayList<TransactionModel> = arrayListOf()
 
@@ -148,18 +99,18 @@ class ExportData : AppCompatActivity() {
                 if (snapshot.exists()) {
                     for (transactionSnap in snapshot.children) {
                         val transactionData = transactionSnap.getValue(TransactionModel::class.java) //reference data class
-                        if (transactionData!!.date!! > dateStart-86400000 &&
-                            transactionData.date!!<= dateEnd){
+                        if (transactionData!!.date!! > dateStart - 86400000 &&
+                            transactionData.date!! <= dateEnd) {
                             transactionList.add(transactionData)
                         }
                     }
 
-                    if (transactionList.isEmpty()){ //if there is no data in the selected time range
+                    if (transactionList.isEmpty()) { //if there is no data in the selected time range
                         Snackbar.make(findViewById(android.R.id.content), "There is no transaction data in the " + convertDate(dateStart, dateEnd) + " date range.", Snackbar.LENGTH_LONG).show()
-                    }else{
-                        for ((i) in transactionList.withIndex()){
+                    } else {
+                        for ((i) in transactionList.withIndex()) {
                             // Create a New Row for every new entry in list
-                            val rowData: Row = sheet.createRow(i+1)
+                            val rowData: Row = sheet.createRow(i + 1)
 
                             // Create Cells for each row
                             cell = rowData.createCell(0)
@@ -168,9 +119,9 @@ class ExportData : AppCompatActivity() {
                             cell.setCellValue(simpleDateFormat.format(result))
 
                             cell = rowData.createCell(1)
-                            if (transactionList[i].type == 1){
+                            if (transactionList[i].type == 1) {
                                 cell.setCellValue("Expense")
-                            }else{
+                            } else {
                                 cell.setCellValue("Income")
                             }
 
@@ -186,27 +137,47 @@ class ExportData : AppCompatActivity() {
                             cell = rowData.createCell(5)
                             cell.setCellValue(transactionList[i].note)
                         }
-                        storeExcelInStorage()
+                        promptForFileLocation()
                     }
-                }else{
+                } else {
                     Snackbar.make(findViewById(android.R.id.content), "There is no transaction data, you can add transaction first", Snackbar.LENGTH_LONG).show()
                 }
             }
 
-            override fun onCancelled(error: DatabaseError) {
-
-            }
+            override fun onCancelled(error: DatabaseError) {}
         })
     }
 
-    private fun isExternalStorageAvailable(): Boolean {
-        val externalStorageState: String = Environment.getExternalStorageState()
-        return Environment.MEDIA_MOUNTED == externalStorageState
+    private fun promptForFileLocation() {
+        // Create the intent to allow the user to pick a location
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            type = "application/vnd.ms-excel"  // Excel file type
+            putExtra(Intent.EXTRA_TITLE, fileName)  // File name to be shown to the user
+        }
+        startActivityForResult(intent, REQUEST_CODE_CREATE_FILE)
     }
 
-    private fun isExternalStorageReadOnly(): Boolean {
-        val externalStorageState = Environment.getExternalStorageState()
-        return Environment.MEDIA_MOUNTED_READ_ONLY == externalStorageState
+    // Handle the result of the file picker intent
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == REQUEST_CODE_CREATE_FILE && resultCode == RESULT_OK) {
+            val uri: Uri? = data?.data
+            uri?.let {
+                try {
+                    // Get an OutputStream for the file location selected by the user
+                    val outputStream = contentResolver.openOutputStream(uri)
+                    if (outputStream != null) {
+                        workbook.write(outputStream)  // Write the data to the file
+                        outputStream.close()
+                        Snackbar.make(findViewById(android.R.id.content), "Excel file exported successfully.", Snackbar.LENGTH_LONG).show()
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error writing file: ", e)
+                    Snackbar.make(findViewById(android.R.id.content), "Failed to export Excel file.", Snackbar.LENGTH_LONG).show()
+                }
+            }
+        }
     }
 
     private fun setHeaderCellStyle() {
@@ -254,12 +225,12 @@ class ExportData : AppCompatActivity() {
         val startDay = cal.getActualMinimum(Calendar.DAY_OF_MONTH) //get the first date of the month
         cal.set(Calendar.DAY_OF_MONTH, startDay)
         val startDate = cal.time
-        dateStart= startDate.time //convert to millis
+        dateStart = startDate.time //convert to millis
 
         val endDay = cal.getActualMaximum(Calendar.DAY_OF_MONTH) //get the last date of the month
         cal.set(Calendar.DAY_OF_MONTH, endDay)
         val endDate = cal.time
-        dateEnd= endDate.time //convert to millis
+        dateEnd = endDate.time //convert to millis
 
         dateRangeEt.hint = "This Month"
     }
@@ -282,13 +253,11 @@ class ExportData : AppCompatActivity() {
 
             // Setting up the event for when ok is clicked
             datePicker.addOnPositiveButtonClickListener {
-                //convert the result from string to long type :
                 val dateString = datePicker.selection.toString()
                 val date: String = dateString.filter { it.isDigit() } //only takes digit value
-                //divide the start and end date value :
-                dateStart = date.substring(0,13).toLong()
-                dateEnd  = date.substring(13).toLong()
-                dateRangeEt.hint = convertDate(dateStart, dateEnd) //call function to convert millis to string
+                dateStart = date.substring(0, 13).toLong()
+                dateEnd = date.substring(13).toLong()
+                dateRangeEt.hint = convertDate(dateStart, dateEnd)
             }
         }
     }
@@ -317,54 +286,4 @@ class ExportData : AppCompatActivity() {
             finish()
         }
     }
-
-    private fun requestPermissions() {
-        Log.e(tagPermission, "requestPermissions: ")
-        ActivityCompat.requestPermissions(this, PERMISSIONS, 25)
-    }
-
-    private fun checkPermissionsAtRuntime(): Boolean {
-        Log.e(tagPermission, "checkPermissionsAtRuntime: ")
-        for (permission in PERMISSIONS) {
-            if (ActivityCompat.checkSelfPermission(this, permission)
-                != PackageManager.PERMISSION_GRANTED
-            ) {
-                return false
-            }
-        }
-        return true
-    }
-
-    /**
-     * Method: Show Alert Dialog when User denies permission permanently
-     */
-    private fun inflateAlertDialog() {
-        // Inflate Alert Dialog
-        AlertDialog.Builder(this)
-            .setTitle("Permissions Mandatory")
-            .setMessage("Kindly enable all permissions through Settings")
-            .setPositiveButton("OKAY") { dialogInterface: DialogInterface, _: Int ->
-                launchAppSettings()
-                dialogInterface.dismiss()
-            }
-            .setCancelable(false)
-            .show()
-    }
-
-    /**
-     * Method: Launch App-Settings Screen
-     */
-    private fun launchAppSettings() {
-        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-        val uri = Uri.fromParts("package", packageName, null)
-        intent.data = uri
-        startActivityForResult(intent, 20)
-    }
-
-    override fun onStart() {
-        super.onStart()
-
-        requestPermissions()
-    }
 }
-
