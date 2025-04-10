@@ -416,6 +416,7 @@ class TransactionFragment : Fragment() {
                                 intent.putExtra("amount", transactionList[position].amount)
                                 intent.putExtra("date", transactionList[position].date)
                                 intent.putExtra("note", transactionList[position].note)
+                                intent.putExtra("recurring", transactionList[position].recurring)
                                 startActivity(intent)
                             }
                         })

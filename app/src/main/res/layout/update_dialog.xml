@@ -4,8 +4,8 @@
     android:layout_height="wrap_content">
 
     <RelativeLayout
-        android:layout_width="wrap_content"
-        android:layout_height="530dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:background="@color/white">
 
         <com.google.android.material.textfield.TextInputLayout
@@ -121,11 +121,21 @@
                 />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <CheckBox
+            android:id="@+id/recurringCheckbox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/noteTIL"
+            android:layout_marginStart="30dp"
+            android:layout_marginTop="20dp"
+            android:text="Recurring Transaction"
+            android:textColor="@color/black" />
+
         <Button
             android:id="@+id/updateButton"
             android:layout_width="wrap_content"
             android:layout_height="40dp"
-            android:layout_below="@+id/noteTIL"
+            android:layout_below="@+id/recurringCheckbox"
             android:layout_centerHorizontal="true"
             android:layout_marginTop="20dp"
             android:background="@drawable/rounded_button"

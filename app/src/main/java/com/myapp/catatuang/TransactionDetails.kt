@@ -137,6 +137,8 @@ class TransactionDetails : AppCompatActivity() {
         val etDate = mDialogView.findViewById<EditText>(R.id.dateUpdate)
         val btnUpdateData = mDialogView.findViewById<Button>(R.id.updateButton)
         val etNote = mDialogView.findViewById<EditText>(R.id.noteUpdate)
+        val checkBoxRecurring = mDialogView.findViewById<CheckBox>(R.id.recurringCheckbox)
+
         //--------
 
         etTitle.setText(intent.getStringExtra("title").toString())
@@ -153,6 +155,8 @@ class TransactionDetails : AppCompatActivity() {
         val listExpense = CategoryOptions.expenseCategory() //getting the arrayList data from CategoryOptions file
         val expenseAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, listExpense)
         etCategory.setAdapter(expenseAdapter)
+        val isRecurring = intent.getBooleanExtra("recurring", false)
+        checkBoxRecurring.isChecked = isRecurring
 
         if (type == 1) { //expense menu
             etCategory.setAdapter(expenseAdapter) //if expense type selected, the set list expense array in category menu
@@ -217,7 +221,8 @@ class TransactionDetails : AppCompatActivity() {
                 etAmount.text.toString().toDouble(),
                 dateUpdate,
                 etNote.text.toString(),
-                invertedDate
+                invertedDate,
+                checkBoxRecurring.isChecked
             )
             Toast.makeText(applicationContext, "Transaction Data Updated", Toast.LENGTH_LONG).show()
 
@@ -246,14 +251,15 @@ class TransactionDetails : AppCompatActivity() {
         amount: Double,
         date: Long,
         note: String,
-        invertedDate: Long
+        invertedDate: Long,
+        recurring: Boolean
     ){
         // --Initialize Firebase Auth and firebase database--
         val user = Firebase.auth.currentUser
         val uid = user?.uid
         if (uid != null) {
             val dbRef = FirebaseDatabase.getInstance().getReference(uid) //initialize database with uid as the parent
-            val transactionInfo = TransactionModel(transactionID, type, title, category, amount, date, note, invertedDate)
+            val transactionInfo = TransactionModel(transactionID, type, title, category, amount, date, note, invertedDate, recurring)
             dbRef.child(transactionID).setValue(transactionInfo)
         }
     }
