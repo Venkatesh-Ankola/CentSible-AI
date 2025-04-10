@@ -193,7 +193,7 @@ class InsertionActivity : AppCompatActivity() {
 
             val transactionID = dbRef.push().key!!
             invertedDate = date * -1 //convert millis value to negative, so it can be sort as descending order
-            val transaction = TransactionModel(transactionID, type, title, category, amount, date, note, invertedDate, recurring) //object of data class
+            val transaction = TransactionModel(transactionID, type, title, category, amount, date, if (recurring) "$note (Recurring)" else note, invertedDate, recurring) //object of data class
 
             dbRef.child(transactionID).setValue(transaction)
                 .addOnCompleteListener {

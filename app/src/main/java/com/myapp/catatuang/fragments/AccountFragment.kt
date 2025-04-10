@@ -133,7 +133,6 @@ class AccountFragment : Fragment() {
     }
 
     private fun checkAndAddRecurringTransactions() {
-
         val user = Firebase.auth.currentUser
         val uid = user?.uid ?: return
         val dbRef = FirebaseDatabase.getInstance().getReference(uid)
@@ -148,11 +147,10 @@ class AccountFragment : Fragment() {
 
             snapshot.children.forEach { child ->
                 val transaction = child.getValue(TransactionModel::class.java)
-                Log.d("transaction", "transaction $transaction")
                 val txDate = transaction?.date
                 val flag = transaction?.recurring ?: false
-                if (flag) {
 
+                if (flag) {
                     val cal = Calendar.getInstance().apply {
                         if (txDate != null) {
                             timeInMillis = txDate
@@ -161,9 +159,7 @@ class AccountFragment : Fragment() {
 
                     val transactionMonth = cal.get(Calendar.MONTH)
                     val transactionYear = cal.get(Calendar.YEAR)
-                    Log.d("month", "transaction month $transactionMonth")
 
-                    // Check if this transaction hasn't been duplicated for this month
                     if (transactionMonth != currentMonth || transactionYear != currentYear) {
                         cal.set(Calendar.MONTH, currentMonth)
                         cal.set(Calendar.YEAR, currentYear)
@@ -191,27 +187,31 @@ class AccountFragment : Fragment() {
                                 date = newDate,
                                 note = "${transaction?.note} (Recurring)",
                                 invertedDate = newInvertedDate,
-                                recurring = true
+                                recurring = true // ✅ keep this true for the new one
                             )
 
                             dbRef.child(newId).setValue(newTransaction)
+
+                            // ✅ Set recurring = false for the old one
+                            transaction?.recurring = false
+                            child.ref.setValue(transaction)
+
                             sendRecurringTransactionNotification()
                             recurringAdded++
 
-                            // ✅ Optional: Log formatted date
                             val readableDate = simpleDateFormat.format(Date(newDate))
                             Log.d("RecurringCheck", "Added recurring transaction on $readableDate")
                         }
-
                     }
                 }
             }
 
             if (recurringAdded > 0) {
-//                Toast.makeText(this@MainActivity, "$recurringAdded recurring transaction(s) added", Toast.LENGTH_SHORT).show()
+                // Toast or notification logic can go here if needed
             }
         }
     }
+
 
 
 
