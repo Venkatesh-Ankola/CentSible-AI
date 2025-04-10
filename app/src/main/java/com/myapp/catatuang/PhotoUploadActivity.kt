@@ -37,6 +37,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import android.content.pm.PackageManager
+import android.widget.ArrayAdapter
+import android.widget.CheckBox
+import android.widget.RelativeLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
@@ -47,6 +50,10 @@ class PhotoUploadActivity : AppCompatActivity() {
     private val REQUEST_IMAGE_PICK = 100
     private lateinit var photoURI: Uri
     private val CAMERA_PERMISSION_CODE = 200
+    private lateinit var adapter: ArrayAdapter<String>
+    private lateinit var recurringCheckBox: CheckBox
+
+
 
 
 
@@ -78,6 +85,8 @@ class PhotoUploadActivity : AppCompatActivity() {
         imageViewPreview = findViewById(R.id.imageViewPreview)
 //        chatgptResult = findViewById(R.id.chatgptResult)
         saveChatGPTResultButton = findViewById(R.id.saveChatGPTResultButton)
+        recurringCheckBox = findViewById(R.id.recurringCheckBox)
+        recurringCheckBox.isChecked = false
 
         btnSelectPhoto.setOnClickListener {
             val options = arrayOf("Take Photo", "Choose from Gallery")
@@ -103,6 +112,23 @@ class PhotoUploadActivity : AppCompatActivity() {
         amountEditText = findViewById(R.id.amount)
         categoryAutoCompleteTextView = findViewById(R.id.category)
         titleEditText = findViewById(R.id.title)
+
+        val expenseCategories = CategoryOptions.expenseCategory()
+        adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, expenseCategories)
+        categoryAutoCompleteTextView.setAdapter(adapter)
+        categoryAutoCompleteTextView.setAdapter(adapter)
+
+        categoryAutoCompleteTextView.setOnClickListener {
+            categoryAutoCompleteTextView.showDropDown()
+        }
+        categoryAutoCompleteTextView.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                categoryAutoCompleteTextView.post {
+                    categoryAutoCompleteTextView.showDropDown()
+                }
+            }
+        }
+
 
 
         saveChatGPTResultButton.setOnClickListener {
@@ -255,12 +281,21 @@ class PhotoUploadActivity : AppCompatActivity() {
                         categoryAutoCompleteTextView.setText(category)
                         titleEditText.setText(title)
                         amountEditText.visibility = EditText.VISIBLE
+                        categoryAutoCompleteTextView.setAdapter(adapter)
                         categoryAutoCompleteTextView.visibility = AutoCompleteTextView.VISIBLE
                         titleEditText.visibility = EditText.VISIBLE
+                        recurringCheckBox.visibility = CheckBox.VISIBLE
+                        val layoutParams = recurringCheckBox.layoutParams as RelativeLayout.LayoutParams
+                        layoutParams.addRule(RelativeLayout.BELOW, R.id.categoryTIL)
+                        recurringCheckBox.layoutParams = layoutParams
+
 
 //                        chatgptResult.text = "Amount: $amount\nCategory: $category\nTitle: $title"
 //                        chatgptResult.visibility = TextView.VISIBLE
                         saveChatGPTResultButton.visibility = Button.VISIBLE
+                        val saveParams = saveChatGPTResultButton.layoutParams as RelativeLayout.LayoutParams
+                        saveParams.addRule(RelativeLayout.BELOW, R.id.recurringCheckBox)
+                        saveChatGPTResultButton.layoutParams = saveParams
                     } else {
                         Log.e("ChatGPTParsing", "Failed to parse ChatGPT response")
                     }
@@ -324,12 +359,17 @@ class PhotoUploadActivity : AppCompatActivity() {
             "amount" to amount,
             "date" to System.currentTimeMillis(),
             "note" to "",
+            "recurring" to recurringCheckBox.isChecked,
             "invertedDate" to -System.currentTimeMillis()
         )
 
         dbRef.child(transactionID).setValue(transactionData)
             .addOnCompleteListener {
                 Toast.makeText(this, "ChatGPT Transaction Saved Successfully", Toast.LENGTH_LONG).show()
+                val intent = Intent(this, MainActivity::class.java)
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(intent)
+                finish()
             }
             .addOnFailureListener { err ->
                 Toast.makeText(this, "Error saving transaction: ${err.message}", Toast.LENGTH_LONG).show()

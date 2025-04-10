@@ -113,7 +113,7 @@
             android:drawableStart="@drawable/ic_baseline_format_list_bulleted_24"
             android:drawablePadding="8dp"
             android:hint="Category"
-            android:inputType="none"
+            android:inputType="text"
             android:visibility="gone"/>
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -164,12 +164,24 @@
             android:visibility="gone"/>
     </com.google.android.material.textfield.TextInputLayout>
 
+    <CheckBox
+        android:id="@+id/recurringCheckBox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/noteTIL"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="30dp"
+        android:text="Mark as recurring"
+        android:textColor="@color/black"
+        android:visibility="gone"/>
+
+
     <!-- Save Button -->
     <Button
         android:id="@+id/saveChatGPTResultButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/noteTIL"
+        android:layout_below="@id/recurringCheckBox"
         android:layout_marginTop="16dp"
         android:layout_centerHorizontal="true"
         android:backgroundTint="@color/orangePrimary"
