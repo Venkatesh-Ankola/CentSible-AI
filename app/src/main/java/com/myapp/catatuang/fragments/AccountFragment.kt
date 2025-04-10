@@ -97,122 +97,6 @@ class AccountFragment : Fragment() {
 
     }
 
-    private fun sendRecurringTransactionNotification() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1001)
-                return
-            }
-        }
-
-        val notificationManager = requireContext().getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val channelId = "budget_alert_channel"
-        Log.d("ExpenseLog", "Sending Notification")
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId,
-                "Subscription Alert",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "Notifies for recurring subp"
-            }
-            notificationManager.createNotificationChannel(channel)
-        }
-
-        val builder = NotificationCompat.Builder(requireContext(), channelId)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("Recurring Expense Added")
-            .setContentText("We've automatically added your scheduled expense.")
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-
-        Handler(Looper.getMainLooper()).postDelayed({
-            notificationManager.notify(101, builder.build())
-        }, 200)
-    }
-
-    private fun checkAndAddRecurringTransactions() {
-        val user = Firebase.auth.currentUser
-        val uid = user?.uid ?: return
-        val dbRef = FirebaseDatabase.getInstance().getReference(uid)
-
-        dbRef.get().addOnSuccessListener { snapshot ->
-            val calendarNow = Calendar.getInstance()
-            val currentMonth = calendarNow.get(Calendar.MONTH)
-            val currentYear = calendarNow.get(Calendar.YEAR)
-
-            val simpleDateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH)
-            var recurringAdded = 0
-
-            snapshot.children.forEach { child ->
-                val transaction = child.getValue(TransactionModel::class.java)
-                val txDate = transaction?.date
-                val flag = transaction?.recurring ?: false
-
-                if (flag) {
-                    val cal = Calendar.getInstance().apply {
-                        if (txDate != null) {
-                            timeInMillis = txDate
-                        }
-                    }
-
-                    val transactionMonth = cal.get(Calendar.MONTH)
-                    val transactionYear = cal.get(Calendar.YEAR)
-
-                    if (transactionMonth != currentMonth || transactionYear != currentYear) {
-                        cal.set(Calendar.MONTH, currentMonth)
-                        cal.set(Calendar.YEAR, currentYear)
-
-                        val newDate = cal.timeInMillis
-                        val newInvertedDate = -newDate
-
-                        val alreadyExists = snapshot.children.any {
-                            val t = it.getValue(TransactionModel::class.java)
-                            t != null &&
-                                    t.recurring &&
-                                    t.title == transaction?.title &&
-                                    t.date == newDate
-                        }
-
-                        if (!alreadyExists) {
-                            val newId = dbRef.push().key!!
-
-                            val newTransaction = TransactionModel(
-                                transactionID = newId,
-                                type = transaction?.type,
-                                title = transaction?.title,
-                                category = transaction?.category,
-                                amount = transaction?.amount,
-                                date = newDate,
-                                note = "${transaction?.note} (Recurring)",
-                                invertedDate = newInvertedDate,
-                                recurring = true // ✅ keep this true for the new one
-                            )
-
-                            dbRef.child(newId).setValue(newTransaction)
-
-                            // ✅ Set recurring = false for the old one
-                            transaction?.recurring = false
-                            child.ref.setValue(transaction)
-
-                            sendRecurringTransactionNotification()
-                            recurringAdded++
-
-                            val readableDate = simpleDateFormat.format(Date(newDate))
-                            Log.d("RecurringCheck", "Added recurring transaction on $readableDate")
-                        }
-                    }
-                }
-            }
-
-            if (recurringAdded > 0) {
-                // Toast or notification logic can go here if needed
-            }
-        }
-    }
-
-
 
 
     override fun onCreateView(
@@ -799,7 +683,7 @@ $transactionsText
         setupPieChart()
         setupBarChart()
         showAIInsights()
-        checkAndAddRecurringTransactions()
+
     }
 
 
