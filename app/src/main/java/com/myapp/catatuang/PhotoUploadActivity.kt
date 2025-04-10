@@ -350,13 +350,16 @@ class PhotoUploadActivity : AppCompatActivity() {
         val transactionID = dbRef.push().key!!
 
         amount = amountEditText.text.toString().toDouble()
+        val updatedTitle = titleEditText.text.toString()
+        val updatedCategory = categoryAutoCompleteTextView.text.toString()
+        val updatedAmount = amountEditText.text.toString().toDoubleOrNull() ?: 0.0
 
         val transactionData = mapOf(
-            "id" to transactionID,
+            "transactionID" to transactionID,
             "type" to 1,
-            "title" to title,
-            "category" to category,
-            "amount" to amount,
+            "title" to updatedTitle,
+            "category" to updatedCategory,
+            "amount" to updatedAmount,
             "date" to System.currentTimeMillis(),
             "note" to "",
             "recurring" to recurringCheckBox.isChecked,
