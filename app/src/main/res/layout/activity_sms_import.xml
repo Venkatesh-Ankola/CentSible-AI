@@ -1,11 +1,43 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
-    android:padding="16dp"
+    android:padding="0dp"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- Top Banner / Toolbar -->
+    <LinearLayout
+        android:id="@+id/toolbarLinear"
+        android:layout_width="match_parent"
+        android:layout_height="160dp"
+        android:orientation="vertical"
+        android:background="@drawable/bg_insert_expense">
+
+        <ImageButton
+            android:id="@+id/backBtn"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginStart="15dp"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/ic_baseline_clear_24"
+            android:contentDescription="Back" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="30dp"
+            android:layout_marginTop="30dp"
+            android:text="Import from SMS"
+            android:textSize="28sp"
+            android:textColor="@color/white"
+            android:fontFamily="@font/poppinsmedium"
+            android:textStyle="bold"/>
+    </LinearLayout>
+
+    <!-- RecyclerView for SMS list -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/smsRecycler"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="16dp"/>
 </LinearLayout>

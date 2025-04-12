@@ -80,6 +80,8 @@ class PhotoUploadActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_photo_upload)
 
+        categoryAutoCompleteTextView = findViewById(R.id.category)
+
         // Initialize views
         btnSelectPhoto = findViewById(R.id.btnSelectPhoto)
         imageViewPreview = findViewById(R.id.imageViewPreview)
@@ -114,19 +116,19 @@ class PhotoUploadActivity : AppCompatActivity() {
         titleEditText = findViewById(R.id.title)
 
         val expenseCategories = CategoryOptions.expenseCategory()
-        adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, expenseCategories)
+        adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_dropdown_item_1line,
+            expenseCategories
+        )
         categoryAutoCompleteTextView.setAdapter(adapter)
-        categoryAutoCompleteTextView.setAdapter(adapter)
-
-        categoryAutoCompleteTextView.setOnClickListener {
-            categoryAutoCompleteTextView.showDropDown()
-        }
         categoryAutoCompleteTextView.setOnFocusChangeListener { _, hasFocus ->
             if (hasFocus) {
-                categoryAutoCompleteTextView.post {
-                    categoryAutoCompleteTextView.showDropDown()
-                }
+                categoryAutoCompleteTextView.showDropDown()
             }
+        }
+        categoryAutoCompleteTextView.setOnClickListener {
+            categoryAutoCompleteTextView.showDropDown()
         }
 
 
@@ -268,6 +270,8 @@ class PhotoUploadActivity : AppCompatActivity() {
                     )
                 }
 
+
+
                 val responseBody: String = response.body()
                 val parsedResult = parseChatGPTResponse(responseBody)
                 withContext(Dispatchers.Main) {
@@ -278,7 +282,7 @@ class PhotoUploadActivity : AppCompatActivity() {
                         title = parsedResult.third
 
                         amountEditText.setText(amount.toString())
-                        categoryAutoCompleteTextView.setText(category)
+                        categoryAutoCompleteTextView.setText(category, false)
                         titleEditText.setText(title)
                         amountEditText.visibility = EditText.VISIBLE
                         categoryAutoCompleteTextView.setAdapter(adapter)
@@ -310,6 +314,14 @@ class PhotoUploadActivity : AppCompatActivity() {
             }
         }
     }
+
+    override fun onBackPressed() {
+        val intent = Intent(this, MainActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(intent)
+        finish()
+    }
+
 
     private fun parseChatGPTResponse(responseBody: String): Triple<String, String, String>? {
         return try {
