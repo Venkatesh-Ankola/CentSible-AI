@@ -90,7 +90,7 @@ class InsertionActivity : AppCompatActivity() {
                 etCategory.setAdapter(expenseAdapter) //if expense type selected, the set list expense array in category menu
             }
             if (checkedID == R.id.rbIncome){
-                cbRecurring.visibility = View.GONE
+                cbRecurring.visibility = View.VISIBLE
                 type = 2 //income
                 setBackgroundColor()
 
