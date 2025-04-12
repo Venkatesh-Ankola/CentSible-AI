@@ -2,10 +2,12 @@ package com.myapp.catatuang
 
 import android.app.DatePickerDialog
 import android.content.Intent
+import android.content.pm.PackageManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import android.widget.*
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
@@ -31,6 +33,8 @@ class InsertionActivity : AppCompatActivity() {
     private var amount: Double = 0.0
     private var date: Long = 0
     private var invertedDate: Long = 0
+
+    private lateinit var rbSms: RadioButton
 
     private lateinit var cbRecurring: CheckBox
 
@@ -95,7 +99,16 @@ class InsertionActivity : AppCompatActivity() {
                 val incomeAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, listIncome)
                 etCategory.setAdapter(incomeAdapter)
             }
+            if (checkedID == R.id.rbSms) {
+                cbRecurring.visibility = View.GONE
+                val intent = Intent(this, SmsImportActivity::class.java)
+                startActivity(intent)
+            }
+
+
         }
+
+
         //-----
 
         //---date picker---
@@ -117,6 +130,68 @@ class InsertionActivity : AppCompatActivity() {
 
         }
     }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 102) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                parseLatestSmsAndFillForm()
+            } else {
+                Toast.makeText(this, "SMS permission denied", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+
+    private fun parseLatestSmsAndFillForm() {
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_SMS)
+            != PackageManager.PERMISSION_GRANTED) {
+            // Request permission
+            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.READ_SMS), 102)
+            return
+        }
+
+        val cursor = contentResolver.query(
+            android.net.Uri.parse("content://sms/inbox"),
+            arrayOf("address", "body", "date"),
+            null,
+            null,
+            "date DESC"
+        )
+
+        cursor?.use {
+            while (it.moveToNext()) {
+                val body = it.getString(it.getColumnIndexOrThrow("body"))
+                val sender = it.getString(it.getColumnIndexOrThrow("address"))
+
+                if (isExpenseMessage(body)) {
+                    val extractedAmount = extractAmount(body)
+                    if (extractedAmount != null) {
+                        etAmount.setText(extractedAmount.toString())
+                        etTitle.setText("SMS Transaction")
+                        etCategory.setText("Banking", false)
+                        etNote.setText(body.take(80))
+                        return
+                    }
+                }
+            }
+        }
+
+        Toast.makeText(this, "No suitable SMS found", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun isExpenseMessage(message: String): Boolean {
+        return message.contains("debited", ignoreCase = true) ||
+                message.contains("purchase", ignoreCase = true) ||
+                message.contains("spent", ignoreCase = true)
+    }
+
+    private fun extractAmount(message: String): Double? {
+        val regex = Regex("(INR|Rs\\.?|₹)\\s?([0-9,]+\\.?[0-9]*)")
+        val match = regex.find(message)
+        return match?.groups?.get(2)?.value?.replace(",", "")?.toDoubleOrNull()
+    }
+
 
     private fun setBackgroundColor() {
         if (type == 1){
@@ -146,6 +221,7 @@ class InsertionActivity : AppCompatActivity() {
         etNote = findViewById(R.id.note)
         toolbarLinear = findViewById(R.id.toolbarLinear)
         cbRecurring = findViewById(R.id.recurringCheckBox)
+        rbSms = findViewById(R.id.rbSms)
     }
 
     private fun clickDatePicker() {

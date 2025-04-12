@@ -100,6 +100,17 @@
                     android:paddingHorizontal="18dp"
                     android:text="Upload"
                     android:textColor="@drawable/radio_text_selector" />
+                <RadioButton
+                    android:id="@+id/rbSms"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="8dp"
+                    android:background="@drawable/radio_not_selected"
+                    android:button="@drawable/null_radio_button"
+                    android:gravity="center"
+                    android:paddingHorizontal="18dp"
+                    android:text="SMS"
+                    android:textColor="@drawable/radio_text_selector" />
             </RadioGroup>
 
             <com.google.android.material.textfield.TextInputLayout
