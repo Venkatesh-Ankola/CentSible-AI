@@ -81,6 +81,25 @@
                 android:textColor="@color/black"/>
         </com.google.android.material.textfield.TextInputLayout>
 
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp">
+
+            <AutoCompleteTextView
+                android:id="@+id/dialogType"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Type (Income or Expense)"
+                android:inputType="none"
+                android:focusable="true"
+                android:clickable="true"
+                android:textColor="@color/black"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+
+
         <Button
             android:id="@+id/dialogAddButton"
             android:layout_width="wrap_content"
