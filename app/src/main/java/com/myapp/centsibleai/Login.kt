@@ -1,4 +1,4 @@
-package com.myapp.catatuang
+package com.myapp.centsibleai
 
 import android.content.ContentValues
 import android.content.Intent
@@ -15,7 +15,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
-import com.myapp.catatuang.databinding.ActivityLoginBinding
+import com.myapp.centsibleai.databinding.ActivityLoginBinding
 
 class Login : AppCompatActivity() {
 

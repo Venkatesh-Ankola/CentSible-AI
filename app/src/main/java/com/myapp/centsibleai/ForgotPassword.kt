@@ -1,4 +1,4 @@
-package com.myapp.catatuang
+package com.myapp.centsibleai
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle

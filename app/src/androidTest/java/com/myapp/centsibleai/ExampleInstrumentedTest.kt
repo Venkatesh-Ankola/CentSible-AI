@@ -1,4 +1,4 @@
-package com.myapp.catatuang
+package com.myapp.centsibleai
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4

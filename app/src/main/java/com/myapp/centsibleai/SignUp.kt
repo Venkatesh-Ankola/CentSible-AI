@@ -1,4 +1,4 @@
-package com.myapp.catatuang
+package com.myapp.centsibleai
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -12,7 +12,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import com.google.firebase.auth.FirebaseAuth
-import com.myapp.catatuang.databinding.ActivitySignUpBinding
+import com.myapp.centsibleai.databinding.ActivitySignUpBinding
 
 
 class SignUp : AppCompatActivity() {

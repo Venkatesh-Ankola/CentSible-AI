@@ -1,4 +1,4 @@
-package com.myapp.catatuang.fragments
+package com.myapp.centsibleai.fragments
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -24,8 +24,8 @@ import com.facebook.shimmer.ShimmerFrameLayout
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.*
 import com.google.firebase.ktx.Firebase
-import com.myapp.catatuang.*
-import com.myapp.catatuang.R
+import com.myapp.centsibleai.*
+import com.myapp.centsibleai.R
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList

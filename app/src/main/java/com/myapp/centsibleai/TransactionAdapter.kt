@@ -1,4 +1,4 @@
-package com.myapp.catatuang
+package com.myapp.centsibleai
 
 import android.graphics.Color
 import android.view.LayoutInflater

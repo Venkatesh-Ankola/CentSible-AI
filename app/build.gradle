@@ -6,10 +6,10 @@ plugins {
 
 android {
     compileSdk 33
-    namespace 'com.myapp.catatuang'
+    namespace 'com.myapp.centsibleai'
 
     defaultConfig {
-        applicationId "com.myapp.catatuang"
+        applicationId "com.myapp.centsibleai"
         minSdk 23 //minSdk change to 23 from 21
         //noinspection ExpiredTargetSdkVersion
         targetSdk 33

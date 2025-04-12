@@ -1,4 +1,4 @@
-package com.myapp.catatuang
+package com.myapp.centsibleai.fragments
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -33,7 +33,8 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.*
 import com.google.firebase.ktx.Firebase
 import com.google.gson.Gson
-import com.myapp.catatuang.*
+import com.myapp.centsibleai.*
+import com.myapp.centsibleai.R
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO

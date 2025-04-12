@@ -1,12 +1,13 @@
-package com.myapp.catatuang
+package com.myapp.centsibleai
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
-import com.myapp.catatuang.databinding.ActivityMainBinding
-import com.myapp.catatuang.fragments.TransactionFragment
+import com.myapp.centsibleai.databinding.ActivityMainBinding
+import com.myapp.centsibleai.fragments.AccountFragment
+import com.myapp.centsibleai.fragments.TransactionFragment
 
 class MainActivity : AppCompatActivity() {
 
