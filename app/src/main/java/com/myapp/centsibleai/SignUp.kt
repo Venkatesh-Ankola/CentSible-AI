@@ -37,7 +37,7 @@ class SignUp : AppCompatActivity() {
 
         val builder = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_launcher_foreground) // Replace with your logo/icon
-            .setContentTitle("Welcome to CenSible AI 🎉")
+            .setContentTitle("Welcome to CentSible AI 🎉")
             .setContentText("We're excited to help you take control of your finances!")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
 
