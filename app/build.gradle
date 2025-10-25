@@ -19,13 +19,16 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+
     buildTypes {
         release {
-            create("customDebugType") {
-                isDebuggable = true
-                minifyEnabled false
-                proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            }
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        create("customDebugType") {
+            initWith(buildTypes.getByName("debug"))
+            debuggable = true
+            // You can add other custom configurations here if needed
         }
     }
     compileOptions {
